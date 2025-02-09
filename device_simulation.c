@@ -11,7 +11,6 @@ device_manager_t* device_manager_init(void) {
             manager->devices[i] = NULL;
         }
         manager->device_count = 0;
-        printf("分配设备管理器内存 %p\n", manager);
     }
     return manager;
 }
@@ -79,9 +78,6 @@ device_node_t* device_create(
     dev->next = mgr->devices[type];
     mgr->devices[type] = dev;
     mgr->device_count++;
-
-    printf("创建新设备节点 %p\n", dev);
-    printf("分配内存区域 %p\n", dev->regions);
 
     return dev;
 }
@@ -184,7 +180,6 @@ int device_ioctl(
 
 // Cleanup
 void device_manager_cleanup(device_manager_t *manager) {
-    printf("开始清理资源...\n");
     if (!manager) {
         return;
     }
@@ -205,7 +200,6 @@ void device_manager_cleanup(device_manager_t *manager) {
         }
     }
     free(manager);
-    printf("资源清理完成\n");
 }
 
 
