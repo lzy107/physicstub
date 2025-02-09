@@ -22,7 +22,10 @@ device_node_t* device_create(
     int id,
     void* config,
     size_t config_size,
-    int num_regions
+    int num_regions,
+    int (*read_func)(struct device_node*, uint32_t, uint8_t*, uint32_t),
+    int (*write_func)(struct device_node*, uint32_t, const uint8_t*, uint32_t),
+    int (*ioctl_func)(struct device_node*, uint32_t, void*)
 ) {
     if (!mgr || !config || type >= DEVICE_TYPE_MAX) {
         return NULL;
@@ -70,9 +73,9 @@ device_node_t* device_create(
     }
 
     // Set default operations
-    dev->read = device_read;
-    dev->write = device_write;
-    dev->ioctl = device_ioctl;
+    dev->ops.read = read_func ? read_func : device_read;
+    dev->ops.write = write_func ? write_func : device_write;
+    dev->ops.ioctl = ioctl_func ? ioctl_func : device_ioctl;
 
     // Add to linked list
     dev->next = mgr->devices[type];
@@ -115,7 +118,7 @@ static memory_region_t* find_region(device_node_t *dev, uint32_t addr) {
 }
 
 // Generic read operation
-int device_read(
+static int device_read(
     device_node_t *dev,
     uint32_t addr,
     uint8_t *data,
@@ -200,6 +203,20 @@ void device_manager_cleanup(device_manager_t *manager) {
         }
     }
     free(manager);
+}
+
+// 新增公共访问接口
+int device_node_read(device_node_t *dev, uint32_t addr, uint8_t *data, uint32_t len) {
+    return dev->ops.read ? dev->ops.read(dev, addr, data, len) : -1;
+}
+
+// 新增公共访问接口
+int device_node_write(device_node_t *dev, uint32_t addr, const uint8_t *data, uint32_t len) {
+    return dev->ops.write ? dev->ops.write(dev, addr, data, len) : -1;
+}
+
+int device_node_ioctl(device_node_t *dev, uint32_t cmd, void *arg) {
+    return dev->ops.ioctl ? dev->ops.ioctl(dev, cmd, arg) : -1;
 }
 
 

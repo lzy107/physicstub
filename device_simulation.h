@@ -39,10 +39,12 @@ typedef struct device_node {
     memory_region_t *regions;
     struct device_node *next;
     
-    // Function pointers for device operations
-    int (*read)(struct device_node *dev, uint32_t addr, uint8_t *data, uint32_t len);
-    int (*write)(struct device_node *dev, uint32_t addr, const uint8_t *data, uint32_t len);
-    int (*ioctl)(struct device_node *dev, uint32_t cmd, void *arg);
+    // 设备操作函数结构体
+    struct {
+        int (*read)(struct device_node *dev, uint32_t addr, uint8_t *data, uint32_t len);
+        int (*write)(struct device_node *dev, uint32_t addr, const uint8_t *data, uint32_t len);
+        int (*ioctl)(struct device_node *dev, uint32_t cmd, void *arg);
+    } ops;
 } device_node_t;
 
 // Device manager structure
@@ -61,7 +63,10 @@ device_node_t* device_create(
     int id,
     void* config,
     size_t config_size,
-    int num_regions
+    int num_regions,
+    int (*read_func)(struct device_node*, uint32_t, uint8_t*, uint32_t),
+    int (*write_func)(struct device_node*, uint32_t, const uint8_t*, uint32_t),
+    int (*ioctl_func)(struct device_node*, uint32_t, void*)
 );
 
 // Find device by type and index
@@ -72,21 +77,21 @@ device_node_t* device_find(
 );
 
 // Device operations
-int device_read(
+static int device_read(
     device_node_t *dev,
     uint32_t addr,
     uint8_t *data,
     uint32_t len
 );
 
-int device_write(
+static int device_write(
     device_node_t *dev,
     uint32_t addr,
     const uint8_t *data,
     uint32_t len
 );
 
-int device_ioctl(
+static int device_ioctl(
     device_node_t *dev,
     uint32_t cmd,
     void *arg
@@ -94,5 +99,10 @@ int device_ioctl(
 
 // Cleanup
 void device_manager_cleanup(device_manager_t *manager);
+
+// 新增公共接口声明
+int device_node_read(device_node_t *dev, uint32_t addr, uint8_t *data, uint32_t len);
+int device_node_write(device_node_t *dev, uint32_t addr, const uint8_t *data, uint32_t len);
+int device_node_ioctl(device_node_t *dev, uint32_t cmd, void *arg);
 
 #endif // DEVICE_SIMULATION_H

@@ -1,10 +1,15 @@
 #!/bin/bash
 # 清理旧构建
 echo "清理旧构建文件..."
-rm -f device_simulation_test *.o
+rm -rf build && mkdir -p build
 
 echo "Building with GCC..."
-gcc device_simulation.c test_device_simulation.c -o device_simulation_test -lpthread -std=c11
+gcc -std=c11 \
+    -I. \
+    device_simulation.c \
+    tests/device_simulation_test.c \
+    -o build/device_simulation_test \
+    -lpthread
 
 echo "Running..."
-./device_simulation_test
+./build/device_simulation_test
