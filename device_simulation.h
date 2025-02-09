@@ -47,7 +47,7 @@ typedef struct device_node {
 
 // Device manager structure
 typedef struct {
-    device_node_t *head;
+    device_node_t *devices[DEVICE_TYPE_MAX]; // 按类型分组的链表头
     uint32_t device_count;
 } device_manager_t;
 

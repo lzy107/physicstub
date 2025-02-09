@@ -7,7 +7,9 @@
 device_manager_t* device_manager_init(void) {
     device_manager_t *manager = (device_manager_t *)malloc(sizeof(device_manager_t));
     if (manager) {
-        manager->head = NULL;
+        for (int i = 0; i < DEVICE_TYPE_MAX; i++) {
+            manager->devices[i] = NULL;
+        }
         manager->device_count = 0;
         printf("分配设备管理器内存 %p\n", manager);
     }
@@ -74,15 +76,8 @@ device_node_t* device_create(
     dev->ioctl = device_ioctl;
 
     // Add to linked list
-    if (!mgr->head) {
-        mgr->head = dev;
-    } else {
-        device_node_t *current = mgr->head;
-        while (current->next) {
-            current = current->next;
-        }
-        current->next = dev;
-    }
+    dev->next = mgr->devices[type];
+    mgr->devices[type] = dev;
     mgr->device_count++;
 
     printf("创建新设备节点 %p\n", dev);
@@ -101,9 +96,9 @@ device_node_t* device_find(
         return NULL;
     }
 
-    device_node_t *current = manager->head;
+    device_node_t *current = manager->devices[type];
     while (current) {
-        if (current->type == type && current->index == index) {
+        if (current->index == index) {
             return current;
         }
         current = current->next;
@@ -194,18 +189,20 @@ void device_manager_cleanup(device_manager_t *manager) {
         return;
     }
 
-    device_node_t *current = manager->head;
-    while (current) {
-        device_node_t *next = current->next;
-        
-        // Free all memory regions
-        for (uint32_t i = 0; i < current->num_regions; i++) {
-            free(current->regions[i].data);
+    for (int type = 0; type < DEVICE_TYPE_MAX; type++) {
+        device_node_t *current = manager->devices[type];
+        while (current) {
+            device_node_t *next = current->next;
+            
+            // Free all memory regions
+            for (uint32_t i = 0; i < current->num_regions; i++) {
+                free(current->regions[i].data);
+            }
+            free(current->regions);
+            free(current);
+            
+            current = next;
         }
-        free(current->regions);
-        free(current);
-        
-        current = next;
     }
     free(manager);
     printf("资源清理完成\n");

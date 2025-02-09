@@ -68,6 +68,20 @@ int main() {
         printf("[成功] 数据校验通过\n");
     }
 
+    // 在cleanup前添加类型检查
+    printf("\n验证设备类型分组...\n");
+    device_node_t *mem_dev = device_find(mgr, DEVICE_TYPE_MEMORY, 1);
+    if (!mem_dev) {
+        printf("[失败] 内存设备未正确注册\n");
+        test_result = 1;
+    }
+
+    device_node_t *invalid_dev = device_find(mgr, DEVICE_TYPE_IO, 1);
+    if (invalid_dev) {
+        printf("[失败] 错误类型设备存在\n");
+        test_result = 1;
+    }
+
 cleanup:
     // 清理资源
     device_manager_cleanup(mgr);
