@@ -25,6 +25,12 @@ typedef struct {
     uint8_t *data;
 } memory_region_t;
 
+// Device region config structure (已在头文件中正确定义)
+typedef struct {
+    uint32_t base_addr;
+    uint32_t length;
+} device_region_t;
+
 // Device structure
 typedef struct device_node {
     device_type_t type;

@@ -3,18 +3,13 @@
 #include <string.h>
 #include <stdio.h>
 
-// Define the device_region_t structure
-typedef struct {
-    uint32_t base_addr;
-    uint32_t length;
-} device_region_t;
-
 // Initialize device manager
 device_manager_t* device_manager_init(void) {
     device_manager_t *manager = (device_manager_t *)malloc(sizeof(device_manager_t));
     if (manager) {
         manager->head = NULL;
         manager->device_count = 0;
+        printf("分配设备管理器内存 %p\n", manager);
     }
     return manager;
 }
@@ -90,6 +85,9 @@ device_node_t* device_create(
     }
     mgr->device_count++;
 
+    printf("创建新设备节点 %p\n", dev);
+    printf("分配内存区域 %p\n", dev->regions);
+
     return dev;
 }
 
@@ -157,6 +155,7 @@ int device_write(
     const uint8_t *data,
     uint32_t len
 ) {
+    printf("尝试写入地址 0x%x 长度 %u\n", addr, len);
     if (!dev || !data) {
         return -1;
     }
@@ -190,6 +189,7 @@ int device_ioctl(
 
 // Cleanup
 void device_manager_cleanup(device_manager_t *manager) {
+    printf("开始清理资源...\n");
     if (!manager) {
         return;
     }
@@ -208,61 +208,7 @@ void device_manager_cleanup(device_manager_t *manager) {
         current = next;
     }
     free(manager);
-}
-
-// 新增测试主函数
-int main() {
-    printf("开始设备模拟测试...\n");
-    
-    // 初始化设备管理器
-    device_manager_t *mgr = device_manager_init();
-    if (!mgr) {
-        printf("初始化失败！\n");
-        return 1;
-    }
-
-    // 创建测试设备
-    device_region_t regions[] = {
-        {0x1000, 1024},  // 内存区域1
-        {0x2000, 512}    // 内存区域2
-    };
-    
-    device_node_t *dev = device_create(
-        mgr, 
-        DEVICE_TYPE_MEMORY, 
-        1, 
-        regions,                // 作为config参数传递
-        sizeof(regions),         // 添加config_size参数
-        2                       // num_regions参数
-    );
-    if (!dev) {
-        printf("创建设备失败！\n");
-        device_manager_cleanup(mgr);
-        return 1;
-    }
-
-    // 测试读写操作
-    uint8_t write_data[4] = {0xAA, 0xBB, 0xCC, 0xDD};
-    uint8_t read_data[4] = {0};
-    
-    printf("\n测试写入内存区域1...\n");
-    if (device_write(dev, 0x1000, write_data, 4) == 0) {
-        printf("写入成功\n");
-    }
-
-    printf("\n测试读取内存区域1...\n");
-    if (device_read(dev, 0x1000, read_data, 4) == 0) {
-        printf("读取数据: ");
-        for (int i = 0; i < 4; i++) {
-            printf("%02X ", read_data[i]);
-        }
-        printf("\n");
-    }
-
-    // 清理资源
-    device_manager_cleanup(mgr);
-    printf("\n测试完成！\n");
-    return 0;
+    printf("资源清理完成\n");
 }
 
 
